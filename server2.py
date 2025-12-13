@@ -41,7 +41,7 @@ class Client:
         self.name = name
         self.acc_num = acc_num
         
-        self.accounts : List[Dict[str, int] = []
+        self.accounts: List[Dict[str, int]] = []
         self.current = 1 #the account that the client is at right now is the first one
         
         self.start_time = start_time
@@ -59,6 +59,7 @@ def simulation(client_socket, accounts):
         client_socket.send(
             f"You have {client.acc_num} accounts. Choose (1-{client.acc_num})".encode()
         )
+
         choice = client_socket.recv(4096).decode().strip() #pasirenka pradini accounta kuriame klientas atliks operacijas
 
         while True:
@@ -96,14 +97,14 @@ def simulation(client_socket, accounts):
                     client_socket.send(b"Invalid amount.\n")
            
             #deposit
-            elif choice == "2" 
+            elif choice == "2":
                 client_socket.send(f"Enter amount to deposit:".encode("utf-8"))
                 amount = int(client_socket.recv(4096).decode("utf-8"))
-                acc[current]["balance"] += amount
+                acc["balance"] += amount
                 client_socket.send(f"New balance: {acc[current]["balance"]}\n".encode("utf-8"))
 
             #loan
-            elif choice == "3"
+            elif choice == "3":
             
             #check balance   
             elif choice == "4":
@@ -115,7 +116,9 @@ def simulation(client_socket, accounts):
                 client_socket.send(message.encode())
             
             #swith account
-            elif choice == "5"
+            elif choice == "5":
+                current = acc["account"]
+                
                 client_socket.send(f"Enter account number (1-{client.acc_num}):\n".encode("utf-8"))
                 response = client_socket.recv(4096).decode("utf-8")
                 new_current = int(response.strip())
@@ -138,11 +141,6 @@ def simulation(client_socket, accounts):
                     client.current = current
                     client_socket.send(f"Switched to account {current}\n".encode("utf-8"))
                     
-            #exit; nežinau ar logiška vieta jam čia
-            elif choice == "6"
-                server_message = "Exiting Bank simulator... Goodbye!.\n"
-                client_socket.send(server_message.encode('utf-8'))
-                running = False
             else:
                 server_message = "Ivalid option. Enter 1-6.\n"
                 client_socket.send(server_message.encode('utf-8'))
@@ -171,7 +169,7 @@ def handle_client(client_socket):
         response = client_socket.recv(4096).decode('utf-8')
         if not response:  # if reading from the socket failed
             raise Exception("failed to receive response")
-        account_num = int(response.strip())
+        account_num_str = int(response.strip())
 
         if not acc_num_str.isdigit():
             client_socket.send("Invalid input. Must be 1/2/3.\n".encode("utf-8"))
@@ -182,7 +180,12 @@ def handle_client(client_socket):
             client_socket.send("Invalid input. Must be 1/2/3.\n".encode("utf-8"))
             return
 
-       client = Client(name, acc_num, datetime.now())  # your class
+        #gal čia reikia įdėti klausimą dėl pradinio accounto, ir settinti jį kaip current?
+        # server_message = f"Which account You want to start with?? (1-)\n"
+        #client_socket.send(server_message.encode('utf-8'))
+        #response = client_socket.recv(4096).decode('utf-8')
+
+       client = Client(name, acc_num, datetime.now()) #creates the client class
        client.accounts = generate_accounts(acc_num)
        client_socket.send(f"Hello {client.name}! Active account: {current}\n".encode("utf-8"))
  
