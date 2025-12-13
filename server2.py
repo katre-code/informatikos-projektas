@@ -45,7 +45,7 @@ class Client:
         self.acc_num = acc_num
         
         self.accounts = generate_accounts (acc_num, randomize_blance = False)
-        self.current = 1 #the account that the client is at right now is the first one
+        #self.current = 1 #the account that the client is at right now is the first one
         
         self.start_time = start_time
         self.end_time = None
@@ -59,11 +59,39 @@ class Client:
             raise ValueError("Invalid account number")
         self.current = account_index
       
-#reikia sutvarkyti
     def __str__(self):
-        return f'{self.name};{self.level};{self.score};{self.start_time};{self.end_time}'
+        return f'{self.name};{self.acc_num};{self.accounts};{self.start_time};{self.end_time}'
       
 ###############################################################################
+def simulation(client_socket, accounts):
+    while True:
+        client_socket.send(
+            f"You have {len(accounts)} accounts. Choose (1-{len(accounts)})".encode()
+        )
+        choice = client_socket.recv(4096).decode().strip()
+
+        while True:
+            menu = (
+                "\nChoose action: \n"
+                "1. Withdraw\n"
+                "2. Deposit\n"
+                "3. Loan\n"
+                "4. Check balance\n"
+                "5. Switch account\n"
+                "6. Exit\n"
+                "Choice: "
+            )
+            client_socket.send(menu.encode())
+            choice = client_socket.recv(4096).decode().strip()
+            if choice == "1":
+                client_socket.send(b"Amount: ")
+                amount = int(client_socket.recv(4096).decode())
+                if amount <= accounts[current]["balance"]:
+                    accounts[current]["balance"] -=amount
+                    client_socket.send(b"Withdrawal successful.\n")
+                else:
+                    client_socket.send(b"Insufficient funds.\n")
+#################################################################################
 def handle_client(client_socket):
 
     try:
