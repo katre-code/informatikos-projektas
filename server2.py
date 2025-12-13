@@ -44,7 +44,7 @@ class Client:
         self.name = name
         self.acc_num = acc_num
         
-        self.accounts = generate_accounts (acc_num, randomize_blance = False)
+        self.accounts = generate_accounts (acc_num, randomize_balance = False)
         #self.current = 1 #the account that the client is at right now is the first one
         
         self.start_time = start_time
