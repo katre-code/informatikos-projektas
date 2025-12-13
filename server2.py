@@ -54,6 +54,7 @@ class Client:
         return f'{self.name};{self.acc_num};{self.accounts};{self.start_time};{self.end_time}'
       
 ###############################################################################
+#def simulation(client_socket, client)?
 def simulation(client_socket, accounts):
     while True:
         client_socket.send(
@@ -98,7 +99,7 @@ def simulation(client_socket, accounts):
            
             #deposit
             elif choice == "2":
-                client_socket.send(f"Enter amount to deposit:".encode("utf-8"))
+                client_socket.send("Enter amount to deposit:".encode("utf-8"))
                 amount = int(client_socket.recv(4096).decode("utf-8"))
                 acc["balance"] += amount
                 client_socket.send(f"New balance: {acc[current]["balance"]}\n".encode("utf-8"))
@@ -117,7 +118,6 @@ def simulation(client_socket, accounts):
             
             #swith account
             elif choice == "5":
-                current = acc["account"]
                 
                 client_socket.send(f"Enter account number (1-{client.acc_num}):\n".encode("utf-8"))
                 response = client_socket.recv(4096).decode("utf-8")
@@ -125,21 +125,20 @@ def simulation(client_socket, accounts):
             
                 if (new_current < 1 or new_current > client.acc_num):
                    client_socket.send("Account does not exist. Choose an exsiting account.\n".encode("utf-8"))
-                elif new_current == current:
+                elif new_current == client.current:
                      client_socket.send("You are already in this account.\n".encode("utf-8"))
-                else
+                else:
                     client_socket.send("Enter PIN of account:\n".encode("utf-8"))
                     response = client_socket.recv(4096).decode("utf-8")
                     pin = int(response.strip())
 
                     target_acc = client.accounts[new_current - 1]
-                    if pin != target_acc["pin"]
+                    if pin != target_acc["pin"]:
                         client_socket.send("Wrong pin. Account not switched.\n".encode("utf-8"))
                         continue
 
-                    current = new_current
-                    client.current = current
-                    client_socket.send(f"Switched to account {current}\n".encode("utf-8"))
+                    client.current = new_current
+                    client_socket.send(f"Switched to account {client.current}\n".encode("utf-8"))
                     
             else:
                 server_message = "Ivalid option. Enter 1-6.\n"
