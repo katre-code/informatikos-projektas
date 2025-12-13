@@ -85,7 +85,11 @@ def simulation(client_socket, accounts):
             choice = client_socket.recv(4096).decode().strip()
 
             acc = client.get_current_account()
-            
+            #exit
+            if choice == "6":
+                client_socket.send(b"END\n")
+                break
+                
             #withdraw
             if choice == "1":
                 client_socket.send(b"Amount to withdraw: ")
