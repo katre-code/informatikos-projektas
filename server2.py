@@ -180,15 +180,15 @@ def handle_client(client_socket):
             client_socket.send("Invalid input. Must be 1/2/3.\n".encode("utf-8"))
             return
 
-        #gal čia reikia įdėti klausimą dėl pradinio accounto, ir settinti jį kaip current?
+       client = Client(name, acc_num, datetime.now()) #creates the client class
+       client.accounts = generate_accounts(acc_num)
+       client_socket.send(f"Hello {client.name}! Active account: {current}\n".encode("utf-8"))
+
+       #gal čia reikia įdėti klausimą dėl pradinio accounto, ir settinti jį kaip current?
         # server_message = f"Which account You want to start with?? (1-)\n"
         #client_socket.send(server_message.encode('utf-8'))
         #response = client_socket.recv(4096).decode('utf-8')
 
-       client = Client(name, acc_num, datetime.now()) #creates the client class
-       client.accounts = generate_accounts(acc_num)
-       client_socket.send(f"Hello {client.name}! Active account: {current}\n".encode("utf-8"))
- 
        simulation(client_socket, client)
        send_account_info(client_socket, client.accounts)
 
