@@ -21,7 +21,7 @@ def generate_accounts(account_num: int, randomize_balance: bool = True) -> List[
         raise ValueError("account_num must be 1, 2, 3")
     
     accounts : List[Dict[str, int]] = []
-    n = accounts_num
+    n = account_num
     for i in range (n):
         acc_num = random.randint(100000, 999999)
         pin = random.randint(1000, 9999)
