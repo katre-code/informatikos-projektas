@@ -27,11 +27,11 @@ def generate_accounts(account_num: int, randomize_balance: bool = True) -> List[
         pin = random.randint(1000, 9999)
         balance = random.randint(500, 2000) 
         account = {
-                    "account": i+1
-                    "acc_num": acc_num
-                    "pin": pin
-                    "balance": balance
-                    "loan" : 0
+                    "account": i+1,
+                    "acc_num": acc_num,
+                    "pin": pin,
+                    "balance": balance,
+                    "loan" : 0,
             }
         accounts.append(account)
         
