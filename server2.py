@@ -31,7 +31,7 @@ def generate_accounts(account_num: int, randomize_balance: bool = True) -> List[
                     "acc_num": acc_num,
                     "pin": pin,
                     "balance": balance,
-                    "loan" : 0,
+                    "loan" : 0
             }
         accounts.append(account)
         
