@@ -2,6 +2,7 @@ import socket
 import os
 import time
 from datetime import datetime
+from typing import List, Dict
 import random
 
 # Unix socket file
@@ -14,15 +15,11 @@ def format_datetime(dt):
 
 ###############################################################################
 def generate_accounts(account_num: int, randomize_balance: bool = True) -> List[Dict[str, int]]:
-
     #“A list where each element is a dictionary, and each dictionary maps strings to integers.”
-
-    if account_num not in (1, 2, 3):
-        raise ValueError("account_num must be 1, 2, 3")
     
     accounts : List[Dict[str, int]] = []
-    n = account_num
-    for i in range (n):
+    
+    for i in range (account_num):
         acc_num = random.randint(100000, 999999)
         pin = random.randint(1000, 9999)
         balance = random.randint(500, 2000) 
@@ -44,7 +41,7 @@ class Client:
         self.name = name
         self.acc_num = acc_num
         
-        self.accounts = generate_accounts (acc_num, randomize_balance = False)
+        self.accounts : List[Dict[str, int] = []
         self.current = 1 #the account that the client is at right now is the first one
         
         self.start_time = start_time
@@ -52,12 +49,6 @@ class Client:
 
     def _acc(self) -> Dict[str, int]:
         return self.accounts[self.current -1]
-      
-#šis metodas iš chat gbt ar biški not sure ar jis reikalingas bus išviso
-    def swith_accounts(self, account index: int) -> None:
-        if not (1 <= account_index <= self.acc_num):
-            raise ValueError("Invalid account number")
-        self.current = account_index
       
     def __str__(self):
         return f'{self.name};{self.acc_num};{self.accounts};{self.start_time};{self.end_time}'
@@ -103,7 +94,17 @@ def simulation(client_socket, accounts):
                         client_socket.send(b"Insufficient funds.\n")
                 else: 
                     client_socket.send(b"Invalid amount.\n")
+           
+            #deposit
+            elif choice == "2" 
+                client_socket.send(f"Enter amount to deposit:".encode("utf-8"))
+                amount = int(client_socket.recv(4096).decode("utf-8"))
+                acc[current]["balance"] += amount
+                client_socket.send(f"New balance: {acc[current]["balance"]}\n".encode("utf-8"))
 
+            #loan
+            elif choice == "3"
+            
             #check balance   
             elif choice == "4":
                 message = (
@@ -112,6 +113,40 @@ def simulation(client_socket, accounts):
                     f"Loan: {acc['loan']}\n"
                 )
                 client_socket.send(message.encode())
+            
+            #swith account
+            elif choice == "5"
+                client_socket.send(f"Enter account number (1-{client.acc_num}):\n".encode("utf-8"))
+                response = client_socket.recv(4096).decode("utf-8")
+                new_current = int(response.strip())
+            
+                if (new_current < 1 or new_current > client.acc_num):
+                   client_socket.send("Account does not exist. Choose an exsiting account.\n".encode("utf-8"))
+                elif new_current == current:
+                     client_socket.send("You are already in this account.\n".encode("utf-8"))
+                else
+                    client_socket.send("Enter PIN of account:\n".encode("utf-8"))
+                    response = client_socket.recv(4096).decode("utf-8")
+                    pin = int(response.strip())
+
+                    target_acc = client.accounts[new_current - 1]
+                    if pin != target_acc["pin"]
+                        client_socket.send("Wrong pin. Account not switched.\n".encode("utf-8"))
+                        continue
+
+                    current = new_current
+                    client.current = current
+                    client_socket.send(f"Switched to account {current}\n".encode("utf-8"))
+                    
+            #exit; nežinau ar logiška vieta jam čia
+            elif choice == "6"
+                server_message = "Exiting Bank simulator... Goodbye!.\n"
+                client_socket.send(server_message.encode('utf-8'))
+                running = False
+            else:
+                server_message = "Ivalid option. Enter 1-6.\n"
+                client_socket.send(server_message.encode('utf-8'))
+                
 #################################################################################
 #sita funkcija tiesiog kliento informacija atsiuncia
 def send_account_info(client_socket, accounts):
@@ -124,7 +159,7 @@ def send_account_info(client_socket, accounts):
 def handle_client(client_socket):
     try:
         start = datetime.now()
-        server_message = "Welcome, You have connected to the bank simulator, what is Your name?\n"
+        server_message = "Welcome, You have connected to the Bank simulator, what is Your name?\n"
         client_socket.send(server_message.encode('utf-8')) #coverts string into bytes
         response = client_socket.recv(4096).decode('utf-8')
         if not response:  # if reading from the socket failed
@@ -149,7 +184,6 @@ def handle_client(client_socket):
 
        client = Client(name, acc_num, datetime.now())  # your class
        client.accounts = generate_accounts(acc_num)
-       current = 1
        client_socket.send(f"Hello {client.name}! Active account: {current}\n".encode("utf-8"))
  
        simulation(client_socket, client)
@@ -267,7 +301,6 @@ if __name__ == "__main__":
 
 else:
     print("Invalid option.")
-
 
         client.end_time = datetime.now()
         client.score = score
