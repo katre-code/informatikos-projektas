@@ -114,8 +114,8 @@ def simulation(client_socket, accounts):
                 client_socket.send(message.encode())
 #################################################################################
 def handle_client(client_socket):
-
     try:
+        start = datetime.now()
         server_message = "Welcome, You have connected to the bank simulator, what is Your name?\n"
         client_socket.send(server_message.encode('utf-8')) #coverts string into bytes
         response = client_socket.recv(4096).decode('utf-8')
@@ -142,10 +142,38 @@ def handle_client(client_socket):
        client = Client(name, acc_num, datetime.now())  # your class
        client.accounts = generate_accounts(acc_num)
        current = 1
-
-      """
        client_socket.send(f"Hello {client.name}! Active account: {current}\n".encode("utf-8"))
+ 
+       simulation(client_socket, client)
+       send_account_info(client_socket, client.accounts)
 
+def start_server():
+    if os.path.exists(SOCKET_FILE):
+        os.remove(SOCKET_FILE)
+        
+    server_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    server_socket.bind(SOCKET_FILE)
+    server_socket.listen() 
+    print(f"Server started:    {SOCKET_FILE}")
+
+    try:
+        while True:
+            client_socket, _= server_socket.accept()
+            print("New client")
+            handle_client(client_socket)
+            
+    except KeyboardInterrupt:
+        print("\nServer shutting down")
+        
+    finally:
+        server_socket.close()
+        if os.path.exists(SOCKET_FILE):
+            os.remove(SOCKET_FILE)
+        print("Server stopped")
+
+if __name__ == "__main__":
+    start_server()
+"""
        server_message = ("\n Menu:\n"
                           "Withdraw [1]\n"
                           "Deposit [2]\n"
