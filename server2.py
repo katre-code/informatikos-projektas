@@ -45,7 +45,7 @@ class Client:
         self.acc_num = acc_num
         
         self.accounts = generate_accounts (acc_num, randomize_balance = False)
-        #self.current = 1 #the account that the client is at right now is the first one
+        self.current = 1 #the account that the client is at right now is the first one
         
         self.start_time = start_time
         self.end_time = None
@@ -66,7 +66,7 @@ class Client:
 def simulation(client_socket, accounts):
     while True:
         client_socket.send(
-            f"You have {len(accounts)} accounts. Choose (1-{len(accounts)})".encode()
+            f"You have {client.acc_num} accounts. Choose (1-{client.acc_num})".encode()
         )
         choice = client_socket.recv(4096).decode().strip() #pasirenka pradini accounta kuriame klientas atliks operacijas
 
@@ -83,21 +83,27 @@ def simulation(client_socket, accounts):
             )
             client_socket.send(menu.encode())
             choice = client_socket.recv(4096).decode().strip()
+
+            acc = client.get_current_account()
+            
             #withdraw
             if choice == "1":
-                client_socket.send(b"Amount: ")
-                amount = int(client_socket.recv(4096).decode())
-                if amount <= accounts[current]["balance"]:
-                    accounts[current]["balance"] -=amount
-                    client_socket.send(b"Withdrawal successful.\n")
-                else:
-                    client_socket.send(b"Insufficient funds.\n")
+                client_socket.send(b"Amount to withdraw: ")
+                amt = client_socket.recv(4096).decode()
+                if amt.isdigit():
+                    amount = int(amt)
+                    if amount <= acc['balance']:
+                        acc['balance'] -=amount
+                        client_socket.send(b"Withdrawal successful.\n")
+                    else:
+                        client_socket.send(b"Insufficient funds.\n")
+                else: 
+                    client_socket.send(b"Invalid amount.\n")
 
             #check balance   
             elif choice == "4":
-                acc = accounts[current]
                 message = (
-                    f"Account {acc['acc_num']}\n"
+                    f"Account {acc['account']}\n"
                     f"Balance: {acc['balance']}\n"
                     f"Loan: {acc['loan']}\n"
                 )
