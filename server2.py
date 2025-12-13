@@ -40,7 +40,7 @@ def generate_accounts(account_num: int, randomize_balance: bool = True) -> List[
 ###############################################################################
 
 class Client:
-    def __init__(self, name: str, acc_num: int, start_time: datatime):
+    def __init__(self, name: str, acc_num: int, start_time: datetime):
         self.name = name
         self.acc_num = acc_num
         
