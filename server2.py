@@ -68,7 +68,7 @@ def simulation(client_socket, accounts):
         client_socket.send(
             f"You have {len(accounts)} accounts. Choose (1-{len(accounts)})".encode()
         )
-        choice = client_socket.recv(4096).decode().strip()
+        choice = client_socket.recv(4096).decode().strip() #pasirenka pradini accounta kuriame klientas atliks operacijas
 
         while True:
             menu = (
