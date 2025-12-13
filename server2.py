@@ -113,6 +113,14 @@ def simulation(client_socket, accounts):
                 )
                 client_socket.send(message.encode())
 #################################################################################
+#sita funkcija tiesiog kliento informacija atsiuncia
+def send_account_info(client_socket, accounts):
+    message = "Your accounts have been created:\n"
+    for acc in accounts:
+        message = f"Account {acc['account']} | Account number: {acc['acc_num']} | PIN: {acc['pin']} | Balance: {acc['balance']}\n"
+    client_socket.send(message.encode())
+
+#####################################################################################
 def handle_client(client_socket):
     try:
         start = datetime.now()
