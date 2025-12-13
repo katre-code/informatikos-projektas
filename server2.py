@@ -83,6 +83,7 @@ def simulation(client_socket, accounts):
             )
             client_socket.send(menu.encode())
             choice = client_socket.recv(4096).decode().strip()
+            #withdraw
             if choice == "1":
                 client_socket.send(b"Amount: ")
                 amount = int(client_socket.recv(4096).decode())
@@ -91,6 +92,16 @@ def simulation(client_socket, accounts):
                     client_socket.send(b"Withdrawal successful.\n")
                 else:
                     client_socket.send(b"Insufficient funds.\n")
+
+            #check balance   
+            elif choice == "4":
+                acc = accounts[current]
+                message = (
+                    f"Account {acc['acc_num']}\n"
+                    f"Balance: {acc['balance']}\n"
+                    f"Loan: {acc['loan']}\n"
+                )
+                client_socket.send(message.encode())
 #################################################################################
 def handle_client(client_socket):
 
@@ -122,6 +133,7 @@ def handle_client(client_socket):
        client.accounts = generate_accounts(acc_num)
        current = 1
 
+      """
        client_socket.send(f"Hello {client.name}! Active account: {current}\n".encode("utf-8"))
 
        server_message = ("\n Menu:\n"
@@ -254,4 +266,5 @@ def start_server():
 
 if __name__ == "__main__":
     start_server()
+"""
 
