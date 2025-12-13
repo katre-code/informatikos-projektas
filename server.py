@@ -18,19 +18,19 @@ def format_datetime(dt):
 
 
 ###############################################################################
+
 def write_stats(client):
     f = open(GAME_STATS_FILE, 'a')
     f.write(f'{client}\n')
     f.close()
 
-
 ###############################################################################
 
 class BankAccount:
-    def __init__(self, name, balance):
+    def __init__(self, name, balance, loan):
         self.name: str = name
         self.balance: float = balance
-        self.loan: float = 0
+        self.loan: float = loan
 
 class Client:
     def __init__(self, name):
@@ -91,9 +91,39 @@ Your salary is:
     else:
         server_message = f"Operation canceled."
         client_socket.send(server_message.encode('utf-8'))
-        return False;
+        return False
 
+def repay_loan(client_socket, account: BankAccount) -> bool:
+    if account.loan <= 0:
+        server_message = f"You do not have a loan to repay."
+        client_socket.send(server_message.encode('utf-8'))
+        return False
+        
+    server_message = f"""
+Your debt is {account.loan}
+Do you want to repay your loan?
+[Y] - Yes
+[N] - No
+"""
+    client_socket.send(server_message.encode('utf-8'))
+    response = client_socket.recv(4096).decode('utf-8')
 
+    if response == "Y" or response == "y":
+        if account.balance < account.loan:
+            server_message = f"Insufficient funds"
+            client_socket.send(server_message.encode('utf-8'))
+            return False
+        else:
+            account.balance -= account.loan
+            account.loan = 0
+            server_message = f"Your loan succsessfully repaid"
+            client_socket.send(server_message.encode('utf-8'))
+            return True
+    else:
+        server_message = f"Operation canceled."
+        client_socket.send(server_message.encode('utf-8'))
+        return False
+        
 ###############################################################################
 
 def handle_client(client_socket):
@@ -105,7 +135,8 @@ def handle_client(client_socket):
         # Choose bank account.
         account: BankAccount = BankAccount(
             name="account1",
-            balance=550
+            balance=550,
+            loan=0
         )
         client.accounts.append(account)
 
@@ -125,10 +156,8 @@ Current balance: {account.balance} EUR | Current loan: {account.loan} EUR\n
             match choise:
                 case 1:
                     take_out_a_loan(client_socket=client_socket, account=account)
-                    print(account.loan)
                 case 2:
-                    #repay_loan()
-                    pass
+                    repay_loan(client_socket=client_socket, account=account)
 
     except Exception as e:
         print(f"Error while handling client socket: {e}")
