@@ -92,7 +92,7 @@ def simulation(client_socket, client: Client):
             "4. Check balance\n"
             "5. Switch account\n"
             "6. Exit\n"
-            "Choice: "
+            "Choice:\n "
         )
         client_socket.send(menu.encode())
         choice = client_socket.recv(4096).decode().strip()
@@ -103,7 +103,7 @@ def simulation(client_socket, client: Client):
                 
         #withdraw
         elif choice == "1":
-            client_socket.send(b"Amount to withdraw: ")
+            client_socket.send(b"Amount to withdraw:\n")
             amt = client_socket.recv(4096).decode()
             if amt.isdigit():
                 amount = int(amt)
@@ -117,7 +117,7 @@ def simulation(client_socket, client: Client):
            
         #deposit
         elif choice == "2":
-            client_socket.send("Enter amount to deposit:".encode("utf-8"))
+            client_socket.send("Enter amount to deposit:\n".encode("utf-8"))
             amount = int(client_socket.recv(4096).decode("utf-8"))
             acc["balance"] += amount
             client_socket.send(f"New balance: {acc['balance']}\n".encode("utf-8"))
@@ -207,7 +207,6 @@ def handle_client(client_socket):
        send_account_info(client_socket, client.accounts)
        simulation(client_socket, client)
 
-       client_socket.send(f"Hello {client.name}! Active account: {client.current}\n".encode("utf-8"))
        client.end_time = datetime.now()
     finally:
         client_socket.close()
