@@ -1,4 +1,4 @@
-#cia visas client kodas tsg is chat gpt, naudojau sita kai testavau serveri, tai nezinau galim gal sita naudot
+"""cia visas client kodas tsg is chat gpt, naudojau sita kai testavau serveri, tai nezinau galim gal sita naudot"""
 
 #include <stdio.h>
 #include <stdlib.h>
