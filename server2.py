@@ -92,7 +92,7 @@ def simulation(client_socket, client: Client):
             "4. Check balance\n"
             "5. Switch account\n"
             "6. Exit\n"
-            "Choice:\n "
+            "Choice:\n"
         )
         client_socket.send(menu.encode())
         choice = client_socket.recv(4096).decode().strip()
@@ -202,12 +202,12 @@ def handle_client(client_socket):
             client_socket.send("Invalid input. Must be 1/2/3.\n".encode("utf-8"))
             return
 
-       client = Client(name, acc_num, datetime.now()) 
+        client = Client(name, acc_num, datetime.now()) 
 
-       send_account_info(client_socket, client.accounts)
-       simulation(client_socket, client)
+        send_account_info(client_socket, client.accounts)
+        simulation(client_socket, client)
 
-       client.end_time = datetime.now()
+        client.end_time = datetime.now()
     finally:
         client_socket.close()
         print("Client disconnected")
