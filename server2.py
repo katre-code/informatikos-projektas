@@ -54,11 +54,10 @@ class Client:
         return f'{self.name};{self.acc_num};{self.start_time};{self.end_time}'
       
 ###############################################################################
-#def simulation(client_socket, client)?
 def simulation(client_socket, client: Client):
     while True:
         client_socket.send(
-            f"You have {client.acc_num} accounts. Choose (1-{client.acc_num})".encode()
+            f"You have {client.acc_num} accounts. Choose (1-{client.acc_num}):\n".encode()
         )
         choice = client_socket.recv(4096).decode().strip() #pasirenka pradini accounta kuriame klientas atliks operacijas
 
@@ -120,10 +119,11 @@ def simulation(client_socket, client: Client):
             client_socket.send("Enter amount to deposit:".encode("utf-8"))
             amount = int(client_socket.recv(4096).decode("utf-8"))
             acc["balance"] += amount
-            client_socket.send(f"New balance: {acc[current]["balance"]}\n".encode("utf-8"))
+            client_socket.send(f"New balance: {acc['balance']}\n".encode("utf-8"))
 
         #loan
         elif choice == "3":
+            client_socket.send(b"Loan feature not implemented yet.\n")
             
         #check balance   
         elif choice == "4":
@@ -166,7 +166,12 @@ def simulation(client_socket, client: Client):
 def send_account_info(client_socket, accounts):
     message = "Your accounts have been created:\n"
     for acc in accounts:
-        message = f"Account {acc['account']} | Account number: {acc['acc_num']} | PIN: {acc['pin']} | Balance: {acc['balance']}\n"
+        message += (
+            f"Account {acc['account']} |"
+            f"Account number: {acc['acc_num']} |"
+            f"PIN: {acc['pin']} |" 
+            f"Balance: {acc['balance']}\n"
+        )
     client_socket.send(message.encode())
 
 #####################################################################################
@@ -185,7 +190,7 @@ def handle_client(client_socket):
         response = client_socket.recv(4096).decode('utf-8')
         if not response:  # if reading from the socket failed
             raise Exception("failed to receive response")
-        acc_str = int(response.strip())
+        acc_str = response.strip()
 
         if not acc_str.isdigit():
             client_socket.send("Invalid input. Must be 1/2/3.\n".encode("utf-8"))
@@ -201,7 +206,7 @@ def handle_client(client_socket):
        send_account_info(client_socket, client.accounts)
        simulation(client_socket, client)
 
-       client_socket.send(f"Hello {client.name}! Active account: {current}\n".encode("utf-8"))
+       client_socket.send(f"Hello {client.name}! Active account: {client.current}\n".encode("utf-8"))
        client.end_time = datetime.now()
 
        #gal čia reikia įdėti klausimą dėl pradinio accounto, ir settinti jį kaip current?
