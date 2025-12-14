@@ -8,10 +8,16 @@ import random
 # Unix socket file
 
 SOCKET_FILE = "./game.sock"
+GAME_STATS_FILE = "./info.dat"
 
 def format_datetime(dt):
     result = f'{dt.year}-{dt.month}-{dt.day}, {dt.hour}:{dt.minute}:{dt.second}'
     return result
+
+def write_stats(client):
+    f = open(GAME_STATS_FILE, 'a')
+    f.write(f'{client}\n')
+    f.close()
 
 ###############################################################################
 def generate_accounts(account_num: int) -> List[Dict[str, int]]:
@@ -51,7 +57,9 @@ class Client:
         return self.accounts[self.current -1]
       
     def __str__(self):
-        return f'{self.name};{self.acc_num};{self.start_time};{self.end_time}'
+        start = format_datetime(self.start_time) 
+        end = format_datetime(self.end_time)
+        return f"{self.name};{self.acc_num};{start};{end}"
       
 ###############################################################################
 def simulation(client_socket, client: Client):
@@ -208,6 +216,8 @@ def handle_client(client_socket):
         simulation(client_socket, client)
 
         client.end_time = datetime.now()
+        write_stats(client)
+        
     finally:
         client_socket.close()
         print("Client disconnected")
@@ -215,6 +225,11 @@ def handle_client(client_socket):
 def start_server():
     if os.path.exists(SOCKET_FILE):
         os.remove(SOCKET_FILE)
+
+    if not os.path.exists(GAME_STATS_FILE):
+        f = open(GAME_STATS_FILE, 'w')
+        f.write('Name;Number of accounts;Test start time;Test end time\n')
+        f.close()
         
     server_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     server_socket.bind(SOCKET_FILE)
