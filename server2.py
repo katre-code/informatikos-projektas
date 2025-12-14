@@ -55,6 +55,7 @@ class Client:
       
 ###############################################################################
 def simulation(client_socket, client: Client):
+    #pasirenka pradini accounta
     while True:
         client_socket.send(
             f"You have {client.acc_num} accounts. Choose (1-{client.acc_num}):\n".encode()
@@ -71,7 +72,7 @@ def simulation(client_socket, client: Client):
             continue
 
        # paklausia pin
-        client_socket.send(b"Enter PIN: ")
+        client_socket.send(b"Enter PIN:\n")
         pin = client_socket.recv(4096).decode().strip()
 
         if pin.isdigit() and int(pin) == client.accounts[acc_index - 1]["pin"]:
@@ -80,7 +81,7 @@ def simulation(client_socket, client: Client):
             break
         else:
             client_socket.send(b"Wrong PIN. Try again.\n")
-            
+    #operaciju while        
     while True:
         acc = client.get_current_account()
         menu = (
@@ -157,7 +158,7 @@ def simulation(client_socket, client: Client):
                 client.current = new_current
                 client_socket.send(f"Switched to account {client.current}\n".encode("utf-8"))
                     
-         else:
+        else:
             server_message = "Ivalid option. Enter 1-6.\n"
             client_socket.send(server_message.encode('utf-8'))
                 
@@ -201,13 +202,16 @@ def handle_client(client_socket):
             client_socket.send("Invalid input. Must be 1/2/3.\n".encode("utf-8"))
             return
 
-       client = Client(name, acc_num, datetime.now()) #creates the client class
+       client = Client(name, acc_num, datetime.now()) 
 
        send_account_info(client_socket, client.accounts)
        simulation(client_socket, client)
 
        client_socket.send(f"Hello {client.name}! Active account: {client.current}\n".encode("utf-8"))
        client.end_time = datetime.now()
+    finally:
+        client_socket.close()
+        print("Client disconnected")
 
        #gal čia reikia įdėti klausimą dėl pradinio accounto, ir settinti jį kaip current?
         # server_message = f"Which account You want to start with?? (1-)\n"
