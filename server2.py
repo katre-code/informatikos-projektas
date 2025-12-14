@@ -228,7 +228,7 @@ def start_server():
 
     if not os.path.exists(GAME_STATS_FILE):
         f = open(GAME_STATS_FILE, 'w')
-        f.write('Name;Number of accounts;Test start time;Test end time\n')
+        f.write('Name; Number of accounts; Test start time; Test end time\n')
         f.close()
         
     server_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
