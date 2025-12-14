@@ -197,16 +197,19 @@ def handle_client(client_socket):
             return
 
        client = Client(name, acc_num, datetime.now()) #creates the client class
+
        send_account_info(client_socket, client.accounts)
-       client.accounts = generate_accounts(acc_num)
+       simulation(client_socket, client)
+
        client_socket.send(f"Hello {client.name}! Active account: {current}\n".encode("utf-8"))
+       client.end_time = datetime.now()
 
        #gal čia reikia įdėti klausimą dėl pradinio accounto, ir settinti jį kaip current?
         # server_message = f"Which account You want to start with?? (1-)\n"
         #client_socket.send(server_message.encode('utf-8'))
         #response = client_socket.recv(4096).decode('utf-8')
 
-       simulation(client_socket, client)
+      #klausimas apie pradini accounta yra simuliacijoje tai kai iskvieciame simuliacija issikviecia ir pats klausimas
 
 def start_server():
     if os.path.exists(SOCKET_FILE):
