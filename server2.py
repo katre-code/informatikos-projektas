@@ -71,7 +71,7 @@ def simulation(client_socket, client: Client):
             client_socket.send(b"Account does not exist.\n")
             continue
 
-"""        # pin check galetu buti
+       # paklausia pin
         client_socket.send(b"Enter PIN: ")
         pin = client_socket.recv(4096).decode().strip()
 
@@ -81,7 +81,7 @@ def simulation(client_socket, client: Client):
             break
         else:
             client_socket.send(b"Wrong PIN. Try again.\n")
-            """
+            
     while True:
         acc = client.get_current_account()
         menu = (
@@ -102,7 +102,7 @@ def simulation(client_socket, client: Client):
             break
                 
         #withdraw
-        if choice == "1":
+        elif choice == "1":
             client_socket.send(b"Amount to withdraw: ")
             amt = client_socket.recv(4096).decode()
             if amt.isdigit():
@@ -128,7 +128,6 @@ def simulation(client_socket, client: Client):
         #check balance   
         elif choice == "4":
             message = (
-                f"Account {acc['account']}\n"
                 f"Balance: {acc['balance']}\n"
                 f"Loan: {acc['loan']}\n"
             )
@@ -186,21 +185,21 @@ def handle_client(client_socket):
         response = client_socket.recv(4096).decode('utf-8')
         if not response:  # if reading from the socket failed
             raise Exception("failed to receive response")
-        account_num_str = int(response.strip())
+        acc_str = int(response.strip())
 
-        if not acc_num_str.isdigit():
+        if not acc_str.isdigit():
             client_socket.send("Invalid input. Must be 1/2/3.\n".encode("utf-8"))
             return
 
-        acc_num = int(acc_num_str)
+        acc_num = int(acc_str)
         if acc_num not in (1, 2, 3):
             client_socket.send("Invalid input. Must be 1/2/3.\n".encode("utf-8"))
             return
 
        client = Client(name, acc_num, datetime.now()) #creates the client class
+       send_account_info(client_socket, client.accounts)
        client.accounts = generate_accounts(acc_num)
        client_socket.send(f"Hello {client.name}! Active account: {current}\n".encode("utf-8"))
-       send_account_info(client_socket, client.accounts)
 
        #gal čia reikia įdėti klausimą dėl pradinio accounto, ir settinti jį kaip current?
         # server_message = f"Which account You want to start with?? (1-)\n"
