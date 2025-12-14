@@ -14,7 +14,7 @@ def format_datetime(dt):
     return result
 
 ###############################################################################
-def generate_accounts(account_num: int, randomize_balance: bool = True) -> List[Dict[str, int]]:
+def generate_accounts(account_num: int) -> List[Dict[str, int]]:
     #“A list where each element is a dictionary, and each dictionary maps strings to integers.”
     
     accounts : List[Dict[str, int]] = []
