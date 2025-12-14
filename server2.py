@@ -41,108 +41,126 @@ class Client:
         self.name = name
         self.acc_num = acc_num
         
-        self.accounts: List[Dict[str, int]] = []
+        self.accounts = generate_accounts(acc_num)
         self.current = 1 #the account that the client is at right now is the first one
         
         self.start_time = start_time
         self.end_time = None
 
-    def _acc(self) -> Dict[str, int]:
+    def get_current_account(self) -> Dict[str, int]:
         return self.accounts[self.current -1]
       
     def __str__(self):
-        return f'{self.name};{self.acc_num};{self.accounts};{self.start_time};{self.end_time}'
+        return f'{self.name};{self.acc_num};{self.start_time};{self.end_time}'
       
 ###############################################################################
 #def simulation(client_socket, client)?
-def simulation(client_socket, accounts):
+def simulation(client_socket, client: Client):
     while True:
         client_socket.send(
             f"You have {client.acc_num} accounts. Choose (1-{client.acc_num})".encode()
         )
-
         choice = client_socket.recv(4096).decode().strip() #pasirenka pradini accounta kuriame klientas atliks operacijas
 
-        while True:
-            menu = (
-                "\nChoose action: \n"
-                "1. Withdraw\n"
-                "2. Deposit\n"
-                "3. Loan\n"
-                "4. Check balance\n"
-                "5. Switch account\n"
-                "6. Exit\n"
-                "Choice: "
-            )
-            client_socket.send(menu.encode())
-            choice = client_socket.recv(4096).decode().strip()
+        if not choice.isdigit():
+            client_socket.send(b"Invalid input.\n")
+            continue
 
-            acc = client.get_current_account()
-            #exit
-            if choice == "6":
-                client_socket.send(b"END\n")
-                break
-                
-            #withdraw
-            if choice == "1":
-                client_socket.send(b"Amount to withdraw: ")
-                amt = client_socket.recv(4096).decode()
-                if amt.isdigit():
-                    amount = int(amt)
-                    if amount <= acc['balance']:
-                        acc['balance'] -=amount
-                        client_socket.send(b"Withdrawal successful.\n")
-                    else:
-                        client_socket.send(b"Insufficient funds.\n")
-                else: 
-                    client_socket.send(b"Invalid amount.\n")
-           
-            #deposit
-            elif choice == "2":
-                client_socket.send("Enter amount to deposit:".encode("utf-8"))
-                amount = int(client_socket.recv(4096).decode("utf-8"))
-                acc["balance"] += amount
-                client_socket.send(f"New balance: {acc[current]["balance"]}\n".encode("utf-8"))
+        acc_index = int(choice)
+        if not (1 <= acc_index <= client.acc_num):
+            client_socket.send(b"Account does not exist.\n")
+            continue
 
-            #loan
-            elif choice == "3":
-            
-            #check balance   
-            elif choice == "4":
-                message = (
-                    f"Account {acc['account']}\n"
-                    f"Balance: {acc['balance']}\n"
-                    f"Loan: {acc['loan']}\n"
-                )
-                client_socket.send(message.encode())
-            
-            #swith account
-            elif choice == "5":
+"""        # pin check galetu buti
+        client_socket.send(b"Enter PIN: ")
+        pin = client_socket.recv(4096).decode().strip()
+
+        if pin.isdigit() and int(pin) == client.accounts[acc_index - 1]["pin"]:
+            client.current = acc_index
+            client_socket.send(f"Account {client.current} selected.\n".encode())
+            break
+        else:
+            client_socket.send(b"Wrong PIN. Try again.\n")
+            """
+    while True:
+        acc = client.get_current_account()
+        menu = (
+            "\nChoose action: \n"
+            "1. Withdraw\n"
+            "2. Deposit\n"
+            "3. Loan\n"
+            "4. Check balance\n"
+            "5. Switch account\n"
+            "6. Exit\n"
+            "Choice: "
+        )
+        client_socket.send(menu.encode())
+        choice = client_socket.recv(4096).decode().strip()
+         #exit
+        if choice == "6":
+            client_socket.send(b"END\n")
+            break
                 
-                client_socket.send(f"Enter account number (1-{client.acc_num}):\n".encode("utf-8"))
-                response = client_socket.recv(4096).decode("utf-8")
-                new_current = int(response.strip())
-            
-                if (new_current < 1 or new_current > client.acc_num):
-                   client_socket.send("Account does not exist. Choose an exsiting account.\n".encode("utf-8"))
-                elif new_current == client.current:
-                     client_socket.send("You are already in this account.\n".encode("utf-8"))
+        #withdraw
+        if choice == "1":
+            client_socket.send(b"Amount to withdraw: ")
+            amt = client_socket.recv(4096).decode()
+            if amt.isdigit():
+                amount = int(amt)
+                if amount <= acc['balance']:
+                    acc['balance'] -=amount
+                    client_socket.send(b"Withdrawal successful.\n")
                 else:
-                    client_socket.send("Enter PIN of account:\n".encode("utf-8"))
-                    response = client_socket.recv(4096).decode("utf-8")
-                    pin = int(response.strip())
+                    client_socket.send(b"Insufficient funds.\n")
+            else: 
+                client_socket.send(b"Invalid amount.\n")
+           
+        #deposit
+        elif choice == "2":
+            client_socket.send("Enter amount to deposit:".encode("utf-8"))
+            amount = int(client_socket.recv(4096).decode("utf-8"))
+            acc["balance"] += amount
+            client_socket.send(f"New balance: {acc[current]["balance"]}\n".encode("utf-8"))
 
-                    target_acc = client.accounts[new_current - 1]
-                    if pin != target_acc["pin"]:
-                        client_socket.send("Wrong pin. Account not switched.\n".encode("utf-8"))
-                        continue
-
-                    client.current = new_current
-                    client_socket.send(f"Switched to account {client.current}\n".encode("utf-8"))
-                    
+        #loan
+        elif choice == "3":
+            
+        #check balance   
+        elif choice == "4":
+            message = (
+                f"Account {acc['account']}\n"
+                f"Balance: {acc['balance']}\n"
+                f"Loan: {acc['loan']}\n"
+            )
+            client_socket.send(message.encode())
+            
+        #swith account
+        elif choice == "5":
+                
+            client_socket.send(f"Enter account number (1-{client.acc_num}):\n".encode("utf-8"))
+            response = client_socket.recv(4096).decode("utf-8")
+            new_current = int(response.strip())
+            
+            if (new_current < 1 or new_current > client.acc_num):
+                client_socket.send("Account does not exist. Choose an exsiting account.\n".encode("utf-8"))
+            elif new_current == client.current:
+                    client_socket.send("You are already in this account.\n".encode("utf-8"))
             else:
-                server_message = "Ivalid option. Enter 1-6.\n"
-                client_socket.send(server_message.encode('utf-8'))
+                client_socket.send("Enter PIN of account:\n".encode("utf-8"))
+                response = client_socket.recv(4096).decode("utf-8")
+                pin = int(response.strip())
+
+                target_acc = client.accounts[new_current - 1]
+                if pin != target_acc["pin"]:
+                    client_socket.send("Wrong pin. Account not switched.\n".encode("utf-8"))
+                    continue
+
+                client.current = new_current
+                client_socket.send(f"Switched to account {client.current}\n".encode("utf-8"))
+                    
+         else:
+            server_message = "Ivalid option. Enter 1-6.\n"
+            client_socket.send(server_message.encode('utf-8'))
                 
 #################################################################################
 #sita funkcija tiesiog kliento informacija atsiuncia
