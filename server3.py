@@ -2,7 +2,6 @@ import socket
 import os
 import time
 from datetime import datetime
-from typing import List, Dict
 import random
 
 # Unix socket file
@@ -20,10 +19,10 @@ def write_stats(client):
     f.close()
 
 ###############################################################################
-def generate_accounts(account_num: int) -> List[Dict[str, int]]:
+def generate_accounts(account_num: int) -> list[dict[str, int]]:
     #“A list where each element is a dictionary, and each dictionary maps strings to integers.”
     
-    accounts : List[Dict[str, int]] = []
+    accounts : list[dict[str, int]] = []
     
     for i in range (account_num):
         acc_num = random.randint(100000, 999999)
@@ -39,6 +38,92 @@ def generate_accounts(account_num: int) -> List[Dict[str, int]]:
         accounts.append(account)
         
     return accounts
+###############################################################################
+
+def confirm_loan(client_socket, account: dict[str, int], loan: float) -> bool:
+    server_message = f"""
+According to your salary, our bank could offer you {loan} EUR.
+Do you want to confirm?
+[Y] - Yes
+[N] - No
+"""
+    client_socket.send(server_message.encode('utf-8'))
+    response = client_socket.recv(4096).decode('utf-8')
+
+    if response == "Y" or response == "y":
+        server_message = f"""
+Your balance is succsessfully updated!\n
+"""
+        client_socket.send(server_message.encode('utf-8'))
+        account["loan"] += loan
+        account["balance"] += loan
+        return True
+
+    else:
+        server_message = f"Operation canceled."
+        client_socket.send(server_message.encode('utf-8'))
+        return False
+
+
+def take_out_a_loan(client_socket, account: dict[str, int]) -> bool:
+    if account["loan"] > 0: 
+        server_message = f"""
+You already took out a loan. Please repay your previous loan, 
+before taking out a new one.
+"""
+        client_socket.send(server_message.encode('utf-8'))
+        return False
+
+    server_message = f"""
+Your salary is:
+[1] <= 1500 EUR
+[2] > 1500 EUR
+"""
+    client_socket.send(server_message.encode('utf-8'))
+    response = client_socket.recv(4096).decode('utf-8')
+    if not response:
+        raise Exception("failed to receive response")
+    choise = int(response.strip())
+
+    if choise == 1: 
+        return confirm_loan(client_socket=client_socket, account=account, loan=500)
+    if choise == 2: 
+        return confirm_loan(client_socket=client_socket, account=account, loan=1000)
+    else:
+        server_message = f"Operation canceled."
+        client_socket.send(server_message.encode('utf-8'))
+        return False
+
+def repay_loan(client_socket, account: dict[str, int]) -> bool:
+    if account["loan"] <= 0:
+        server_message = f"You do not have a loan to repay."
+        client_socket.send(server_message.encode('utf-8'))
+        return False
+        
+    server_message = f"""
+Your debt is {account["loan"]}
+Do you want to repay your loan?
+[Y] - Yes
+[N] - No
+"""
+    client_socket.send(server_message.encode('utf-8'))
+    response = client_socket.recv(4096).decode('utf-8')
+
+    if response == "Y" or response == "y":
+        if account["balance"] < account["loan"]:
+            server_message = f"Insufficient funds"
+            client_socket.send(server_message.encode('utf-8'))
+            return False
+        else:
+            account["balance"] -= account["loan"]
+            account["loan"] = 0
+            server_message = f"Your loan succsessfully repaid"
+            client_socket.send(server_message.encode('utf-8'))
+            return True
+    else:
+        server_message = f"Operation canceled."
+        client_socket.send(server_message.encode('utf-8'))
+        return False
 
 ###############################################################################
 
@@ -53,7 +138,7 @@ class Client:
         self.start_time = start_time
         self.end_time = None
 
-    def get_current_account(self) -> Dict[str, int]:
+    def get_current_account(self) -> dict[str, int]:
         return self.accounts[self.current -1]
       
     def __str__(self):
@@ -97,16 +182,17 @@ def simulation(client_socket, client: Client):
             "\nChoose action: \n"
             "[1] Withdraw\n"
             "[2] Deposit\n"
-            "[3] Loan\n"
-            "[4] Check balance\n"
-            "[5] Switch account\n"
-            "[6] Exit\n"
+            "[3] Take out a loan\n"
+            "[4] Repay loan\n"
+            "[5] Check balance\n"
+            "[6] Switch account\n"
+            "[7] Exit\n"
             "Choice: "
         )
         client_socket.send(menu.encode())
         choice = client_socket.recv(4096).decode().strip()
          #exit
-        if choice == "6":
+        if choice == "7":
             server_message = f"Thank You for choosing our bank! See You next time...\n"
             client_socket.send(server_message.encode('utf-8'))
             client_socket.send(b"END\n")
@@ -141,12 +227,15 @@ def simulation(client_socket, client: Client):
             else:
                 client_socket.send(b"Invalid amount.\n".encode("utf-8"))
 
-        #loan
+        #take out a loan
         elif choice == "3":
-            client_socket.send(b"Loan feature not implemented yet.\n")
+            take_out_a_loan(client_socket=client_socket, account=acc)
+        #repay a loan
+        elif choice == "4":
+            repay_loan(client_socket=client_socket, account=acc)
             
         #check balance   
-        elif choice == "4":
+        elif choice == "5":
             message = (
                 f"Balance $: {acc['balance']}\n"
                 f"Loan $: {acc['loan']}\n"
@@ -154,7 +243,7 @@ def simulation(client_socket, client: Client):
             client_socket.send(message.encode("utf-8"))
             
         #swith account
-        elif choice == "5":
+        elif choice == "6":
                 
             client_socket.send(f"Enter account number (1-{client.acc_num}): ".encode("utf-8"))
             response = client_socket.recv(4096).decode("utf-8")
