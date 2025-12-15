@@ -134,9 +134,9 @@ def simulation(client_socket, client: Client):
             if amt.isdigit():
                 amount = int(amt)
                 acc["balance"] += amount
-                client_socket.send(f"Deposit successful. New balance: {acc['balance']}\n".encode("utf-8"))
+                client_socket.send(f"Deposit successful. New balance: {acc['balance']}$ \n".encode("utf-8"))
             else:
-                client_socket.send(b"Invalid amount.\n")
+                client_socket.send(b"Invalid amount.\n".encode("utf-8"))
 
         #loan
         elif choice == "3":
