@@ -226,6 +226,8 @@ def handle_client(client_socket):
 
         client.end_time = datetime.now()
         write_stats(client)
+        server_message = f'END: Thank You for choosing our bank! See You next time...}\n'
+        client_socket.send(server_message.encode('utf-8'))
         
     finally:
         client_socket.close()
