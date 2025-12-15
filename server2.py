@@ -126,9 +126,12 @@ def simulation(client_socket, client: Client):
         #deposit
         elif choice == "2":
             client_socket.send("Enter amount to deposit:\n".encode("utf-8"))
-            amount = int(client_socket.recv(4096).decode("utf-8"))
-            acc["balance"] += amount
-            client_socket.send(f"New balance: {acc['balance']}\n".encode("utf-8"))
+            if amt.isdigit():
+                amount = int(amt)
+                acc['balance'] +=amount
+                client_socket.send(f"Deposit successful. New balance: {acc['balance']}\n")
+            else:
+                client_socket.send(b"Invalid amount.\n")
 
         #loan
         elif choice == "3":
