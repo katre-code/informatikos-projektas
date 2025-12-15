@@ -163,7 +163,7 @@ def simulation(client_socket, client: Client):
             elif new_current == client.current:
                     client_socket.send("You are already in this account.\n".encode("utf-8"))
             else:
-                client_socket.send("Enter PIN of account:\n".encode("utf-8"))
+                client_socket.send("Enter PIN of account: ".encode("utf-8"))
                 response = client_socket.recv(4096).decode("utf-8")
                 pin = int(response.strip())
 
@@ -226,7 +226,7 @@ def handle_client(client_socket):
 
         client.end_time = datetime.now()
         write_stats(client)
-        server_message = f'END: Thank You for choosing our bank! See You next time...}\n'
+        server_message = f"END: Thank You for choosing our bank! See You next time...\n"
         client_socket.send(server_message.encode('utf-8'))
         
     finally:
