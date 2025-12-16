@@ -208,9 +208,9 @@ def simulation(client_socket, client: Client):
                     acc['balance'] -=amount
                     client_socket.send(f"Withdarw successful. New balance: {acc['balance']}$ \n".encode("utf-8"))
                 else:
-                    client_socket.send(b"Insufficient funds.Check balance by pressing [4]\n".encode("utf-8"))
+                    client_socket.send(b"Insufficient funds.Check balance by pressing [4].\n")
             else: 
-                client_socket.send(b"Invalid amount.\n".encode("utf-8"))
+                client_socket.send(b"Invalid amount.\n")
            
         #deposit
         elif choice == "2":
@@ -225,7 +225,7 @@ def simulation(client_socket, client: Client):
                 acc["balance"] += amount
                 client_socket.send(f"Deposit successful. New balance: {acc['balance']}$ \n".encode("utf-8"))
             else:
-                client_socket.send(b"Invalid amount.\n".encode("utf-8"))
+                client_socket.send(b"Invalid amount.\n")
 
         #take out a loan
         elif choice == "3":
