@@ -133,7 +133,7 @@ class Client:
         self.acc_num = acc_num
         
         self.accounts = generate_accounts(acc_num)
-        self.current = 1 #the account that the client is at right now is the first one
+        self.current = 1 
         
         self.start_time = start_time
         self.end_time = None
