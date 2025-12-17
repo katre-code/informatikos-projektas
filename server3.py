@@ -1,3 +1,8 @@
+#daryti pervedimus į kitus acc
+#fiksuoti acc numbers
+#fiksuoti loan grazinimo laiko -> blokuoti acc
+#prisijungimas prie banko saskaitu po kitu klientu
+
 import socket
 import os
 import time
@@ -201,7 +206,7 @@ def simulation(client_socket, client: Client):
         #withdraw
         elif choice == "1":
             client_socket.send(b"Amount to withdraw: ")
-            amt = client_socket.recv(4096).decode()
+            amt = client_socket.recv(4096).decode().strip()
             if amt.isdigit():
                 amount = int(amt)
                 if amount <= acc['balance']:
