@@ -9,6 +9,7 @@ import time
 from datetime import datetime
 import random
 import json
+from typing import Optional
 
 # Unix socket file
 
@@ -19,9 +20,6 @@ def format_datetime(dt):
     result = f'{dt.year}-{dt.month}-{dt.day}, {dt.hour}:{dt.minute}:{dt.second}'
     return result
 
-def write_stats(client: Client):
-     with open(GAME_STATS_FILE, "a", encoding="utf-8") as f:
-        f.write(json.dumps(client.to_record(), ensure_ascii=False) + "\n")
 
 ###############################################################################
 def generate_accounts(account_num: int) -> list[dict[str, int]]:
@@ -151,8 +149,9 @@ class Client:
         end = format_datetime(self.end_time)
         return f"{self.name};{self.acc_num};{self.accounts};{start};{end}"
     
+      @classmethod
     def from_record(cls, record: dict, start_time: datetime):
-        c = cls.__new__(cls)  # bypass __init__ so we don't generate new accounts
+        c = cls.__new__(cls)  # bypass __init__
 
         c.name = record["name"]
         c.accounts = record["accounts"]
@@ -176,7 +175,13 @@ class Client:
             "start_time": format_datetime(self.start_time),
             "end_time": format_datetime(self.end_time) if self.end_time else None,
         }
-      
+
+#############################################################################
+
+def write_stats(client: Client):
+     with open(GAME_STATS_FILE, "a", encoding="utf-8") as f:
+        f.write(json.dumps(client.to_record(), ensure_ascii=False) + "\n")
+
 ###############################################################################
 def load_latest_client_record_by_name(name: str) -> Optional[dict]:
     """Return the most recent saved record for this name, or None if not found."""
@@ -299,8 +304,11 @@ def simulation(client_socket, client: Client):
         elif choice == "6":
                 
             client_socket.send(f"Enter account number (1-{client.acc_num}): ".encode("utf-8"))
-            response = client_socket.recv(4096).decode("utf-8")
-            new_current = int(response.strip())
+            response = client_socket.recv(4096).decode("utf-8").strip()
+            if not response.isdigit():
+                client_socket.send(b"Invalid input.\n")
+                continue
+            new_current = int(response)
             
             if (new_current < 1 or new_current > client.acc_num):
                 client_socket.send("Account does not exist. Choose an exsiting account.\n".encode("utf-8"))
@@ -387,7 +395,7 @@ def start_server():
 
     if not os.path.exists(GAME_STATS_FILE):
         with open(GAME_STATS_FILE, "w", encoding="utf-8") as f:
-        f.write("# JSONL: one JSON object per line\n")
+            f.write("# JSONL: one JSON object per line\n")
       
         
     server_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
