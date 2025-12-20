@@ -1,34 +1,52 @@
 #daryti pervedimus į kitus acc
-#fiksuoti acc numbers
-#fiksuoti loan grazinimo laiko -> blokuoti acc
-#prisijungimas prie banko saskaitu po kitu klientu
+#fiksuoti acc numbers +
+#fiksuoti loan grazinimo laiko -> blokuoti acc 
+#prisijungimas prie banko saskaitu po kitu klientu +
 
 import socket
 import os
 import time
 from datetime import datetime
 import random
-import json
-from typing import Optional
 
 # Unix socket file
 
 SOCKET_FILE = "./game.sock"
 GAME_STATS_FILE = "./info.dat"
+CLIENTS: dict [str, "Client"] = {}
+USED_ACC_NUMS = []
 
 def format_datetime(dt):
     result = f'{dt.year}-{dt.month}-{dt.day}, {dt.hour}:{dt.minute}:{dt.second}'
     return result
 
+def write_stats(client):
+    f = open(GAME_STATS_FILE, 'a')
+    f.write(f'Client name: {client.name}\n')
+
+    for acc in client.accounts:
+        f.write(
+            f"Account {acc['account']} | "
+            f"Account number: {acc['acc_num']} | "
+            f"PIN: {acc['pin']} | "
+            f"Balance: {acc['balance']} | "
+            f"Loan: {acc['loan']}\n"
+        )
+    f.write(f'\n')
+    f.close()
 
 ###############################################################################
 def generate_accounts(account_num: int) -> list[dict[str, int]]:
-    #“A list where each element is a dictionary, and each dictionary maps strings to integers.”
+    #A list where each element is a dictionary, and each dictionary maps strings to integers
     
     accounts : list[dict[str, int]] = []
     
     for i in range (account_num):
         acc_num = random.randint(100000, 999999)
+        while acc_num in USED_ACC_NUMS: #loopas tikrina ar accountų sąraše nėra ką tik sukurto naujo account_num
+            acc_num = random.randint(100000, 999999)
+        USED_ACC_NUMS.append(acc_num) #prideda naujai sukurtą account_num į panaudotų sąrašą
+        
         pin = random.randint(1000, 9999)
         balance = random.randint(500, 2000) 
         account = {
@@ -41,6 +59,7 @@ def generate_accounts(account_num: int) -> list[dict[str, int]]:
         accounts.append(account)
         
     return accounts
+    
 ###############################################################################
 
 def confirm_loan(client_socket, account: dict[str, int], loan: float) -> bool:
@@ -147,69 +166,14 @@ class Client:
     def __str__(self):
         start = format_datetime(self.start_time) 
         end = format_datetime(self.end_time)
-        return f"{self.name};{self.acc_num};{self.accounts};{start};{end}"
-    
-      @classmethod
-    def from_record(cls, record: dict, start_time: datetime):
-        c = cls.__new__(cls)  # bypass __init__
-
-        c.name = record["name"]
-        c.accounts = record["accounts"]
-        c.acc_num = record["num_accounts"]
-        c.current = 1
-
-        c.start_time = start_time
-        c.end_time = None
-        return c
-
-    def accounts_info(self):
-        #Return all bank accounts info, -> list[dict[str, int]]
-        return self.accounts
-
-    def to_record(self) -> dict:
-        #Single object you can store in info.dat
-        return {
-            "name": self.name,
-            "num_accounts": self.acc_num,
-            "accounts": self.accounts_info(),
-            "start_time": format_datetime(self.start_time),
-            "end_time": format_datetime(self.end_time) if self.end_time else None,
-        }
-
-#############################################################################
-
-def write_stats(client: Client):
-     with open(GAME_STATS_FILE, "a", encoding="utf-8") as f:
-        f.write(json.dumps(client.to_record(), ensure_ascii=False) + "\n")
-
-###############################################################################
-def load_latest_client_record_by_name(name: str) -> Optional[dict]:
-    """Return the most recent saved record for this name, or None if not found."""
-    if not os.path.exists(GAME_STATS_FILE):
-        return None
-
-    latest = None
-    with open(GAME_STATS_FILE, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            try:
-                rec = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-
-            if rec.get("name") == name:
-                latest = rec  # keep overwriting -> last match wins
-
-    return latest
-  
+        return f"{self.name};{self.accounts};{self.acc_num};{start};{end}"
+      
 ###############################################################################
 def simulation(client_socket, client: Client):
     #pasirenka pradini accounta
     while True:
         client_socket.send(
-            f"You have {client.acc_num} accounts. Which account You want to access first? Choose (1-{client.acc_num}):\n".encode()
+            f"You have {client.acc_num} accounts. Which account You want to access? Choose (1-{client.acc_num}):\n".encode()
         )
         choice = client_socket.recv(4096).decode().strip() #pasirenka pradini accounta kuriame klientas atliks operacijas
 
@@ -244,13 +208,14 @@ def simulation(client_socket, client: Client):
             "[4] Repay loan\n"
             "[5] Check balance\n"
             "[6] Switch account\n"
-            "[7] Exit\n"
+            "[7] Money transfer\n"
+            "[8] Exit\n"
             "Choice: "
         )
         client_socket.send(menu.encode())
         choice = client_socket.recv(4096).decode().strip()
          #exit
-        if choice == "7":
+        if choice == "8":
             server_message = f"Thank You for choosing our bank! See You next time...\n"
             client_socket.send(server_message.encode('utf-8'))
             client_socket.send(b"END\n")
@@ -304,11 +269,8 @@ def simulation(client_socket, client: Client):
         elif choice == "6":
                 
             client_socket.send(f"Enter account number (1-{client.acc_num}): ".encode("utf-8"))
-            response = client_socket.recv(4096).decode("utf-8").strip()
-            if not response.isdigit():
-                client_socket.send(b"Invalid input.\n")
-                continue
-            new_current = int(response)
+            response = client_socket.recv(4096).decode("utf-8")
+            new_current = int(response.strip())
             
             if (new_current < 1 or new_current > client.acc_num):
                 client_socket.send("Account does not exist. Choose an exsiting account.\n".encode("utf-8"))
@@ -330,11 +292,15 @@ def simulation(client_socket, client: Client):
         else:
             server_message = "Ivalid option. Enter 1-6.\n"
             client_socket.send(server_message.encode('utf-8'))
+
+        #money transfer
+        #elif choice == "7":
+
                 
 #################################################################################
 #sita funkcija tiesiog kliento informacija atsiuncia
 def send_account_info(client_socket, accounts):
-    message = "Your accounts have been created:\n"
+    message = "Your account information:\n"
     for acc in accounts:
         message += (
             f"Account {acc['account']} |"
@@ -350,36 +316,35 @@ def handle_client(client_socket):
         start = datetime.now()
         server_message = "Welcome, You have connected to the $$$_Bank simulator_$$$, what is Your name?\n"
         client_socket.send(server_message.encode('utf-8')) #coverts string into bytes
-        name = client_socket.recv(4096).decode("utf-8").strip()
-        if not name:
-            raise Exception("failed to receive name")
+        response = client_socket.recv(4096).decode('utf-8')
+        if not response:  # if reading from the socket failed
+            raise Exception("failed to receive response")
+        name = response.strip()
+        if name in CLIENTS:
+            client = CLIENTS [name]
+            client_socket.send(f"Welcome back, {name}! We have loaded your account infomation.\n".encode("utf-8"))
 
-        record = load_latest_client_record_by_name(name)
-
-        if record is not None:
-            client_socket.send(b"Welcome back! Loading your existing accounts...\n")
-            client = Client.from_record(record, start_time=datetime.now())
-
-            # show their accounts (PINs etc.)
-            send_account_info(client_socket, client.accounts)
-
-        else:
-            #new customer-> create fresh accounts
-            client_socket.send(b"New customer detected.\nHow many accounts do You want to open? ([1],[2],[3])\n")
-            acc_str = client_socket.recv(4096).decode("utf-8").strip()
+        else
+            server_message = "How many accounts do You want to open? ([1],[2],[3])\n"
+            client_socket.send(server_message.encode('utf-8'))
+            response = client_socket.recv(4096).decode('utf-8')
+            if not response:  # if reading from the socket failed
+                raise Exception("failed to receive response")
+            acc_str = response.strip()
 
             if not acc_str.isdigit():
-                client_socket.send(b"Invalid input. Must be 1/2/3.\n")
+                client_socket.send("Invalid input. Must be 1/2/3.\n".encode("utf-8"))
                 return
 
             acc_num = int(acc_str)
             if acc_num not in (1, 2, 3):
-                client_socket.send(b"Invalid input. Must be 1/2/3.\n")
+                client_socket.send("Invalid input. Must be 1/2/3.\n".encode("utf-8"))
                 return
 
-            client = Client(name, acc_num, datetime.now())
-            send_account_info(client_socket, client.accounts)
-      
+            client = Client(name, acc_num, datetime.now()) 
+            CLIENTS[name] = client
+
+        send_account_info(client_socket, client.accounts)
         simulation(client_socket, client)
 
         client.end_time = datetime.now()
@@ -394,9 +359,9 @@ def start_server():
         os.remove(SOCKET_FILE)
 
     if not os.path.exists(GAME_STATS_FILE):
-        with open(GAME_STATS_FILE, "w", encoding="utf-8") as f:
-            f.write("# JSONL: one JSON object per line\n")
-      
+        f = open(GAME_STATS_FILE, 'w')
+        f.write('Name; Number of accounts; Test start time; Test end time\n')
+        f.close()
         
     server_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     server_socket.bind(SOCKET_FILE)
