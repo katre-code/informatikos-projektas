@@ -149,6 +149,8 @@ Do you want to repay your loan?
 
 ###############################################################################
 
+###############################################################################
+
 class Client:
     def __init__(self, name: str, acc_num: int, start_time: datetime):
         self.name = name
@@ -167,7 +169,66 @@ class Client:
         start = format_datetime(self.start_time) 
         end = format_datetime(self.end_time)
         return f"{self.name};{self.accounts};{self.acc_num};{start};{end}"
-      
+        
+###############################################################################
+
+def transfer_money(client_socket, client: Client):
+    source_acc = client.get_current_account()
+
+    client_socket.send(
+        f"Enter target account number (1-{client.acc_num}): ".encode("utf-8")
+    )
+    response = client_socket.recv(4096).decode("utf-8").strip()
+
+    if not response.isdigit():
+        client_socket.send(b"Invalid account number.\n")
+        return
+
+    target_index = int(response)
+
+    if target_index < 1 or target_index > client.acc_num:
+        client_socket.send(b"Account does not exist.\n")
+        return
+
+    if target_index == client.current:
+        client_socket.send(b"Cannot transfer to the same account.\n")
+        return
+
+    target_acc = client.accounts[target_index - 1]
+
+    # PIN verification
+    client_socket.send(b"Enter PIN of target account: ")
+    pin = client_socket.recv(4096).decode("utf-8").strip()
+
+    if not pin.isdigit() or int(pin) != target_acc["pin"]:
+        client_socket.send(b"Wrong PIN.\n")
+        return
+
+    # Amount
+    client_socket.send(b"Enter amount to transfer: ")
+    amt = client_socket.recv(4096).decode("utf-8").strip()
+
+    if not amt.isdigit():
+        client_socket.send(b"Invalid amount.\n")
+        return
+
+    amount = int(amt)
+
+    if amount <= 0:
+        client_socket.send(b"Amount must be positive.\n")
+        return
+
+    if amount > source_acc["balance"]:
+        client_socket.send(b"Insufficient funds.\n")
+        return
+
+    # Transfer
+    source_acc["balance"] -= amount
+    target_acc["balance"] += amount
+
+    client_socket.send(
+        f"Transfer successful! {amount}$ transferred to account {target_index}.\n".encode("utf-8")
+    )
 ###############################################################################
 def simulation(client_socket, client: Client):
     #pasirenka pradini accounta
@@ -288,13 +349,14 @@ def simulation(client_socket, client: Client):
 
                 client.current = new_current
                 client_socket.send(f"Switched to account {client.current}\n".encode("utf-8"))
+        #money transfer
+        elif choice == "7":
+            transfer_money(client_socket, client)
                     
         else:
             server_message = "Ivalid option. Enter 1-6.\n"
             client_socket.send(server_message.encode('utf-8'))
 
-        #money transfer
-        #elif choice == "7":
 
                 
 #################################################################################
@@ -324,7 +386,7 @@ def handle_client(client_socket):
             client = CLIENTS [name]
             client_socket.send(f"Welcome back, {name}! We have loaded your account infomation.\n".encode("utf-8"))
 
-        else
+        else:
             server_message = "How many accounts do You want to open? ([1],[2],[3])\n"
             client_socket.send(server_message.encode('utf-8'))
             response = client_socket.recv(4096).decode('utf-8')
