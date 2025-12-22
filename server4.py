@@ -1,4 +1,4 @@
-#daryti pervedimus į kitus acc
+#daryti pervedimus į kitus acc +
 #fiksuoti acc numbers +
 #fiksuoti loan grazinimo laiko -> blokuoti acc 
 #prisijungimas prie banko saskaitu po kitu klientu +
