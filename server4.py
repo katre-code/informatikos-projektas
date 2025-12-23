@@ -442,8 +442,10 @@ def simulation(client_socket, client: Client):
             else:
                 client_socket.send("Enter PIN of account: ".encode("utf-8"))
                 response = client_socket.recv(4096).decode("utf-8")
-                pin = int(response.strip())
-
+                if not response.isdigit():
+                    client_socket.send(b"Invalid PIN.\n")
+                    continue
+                
                 pin = int(response)
                 target_acc = client.accounts[new_current - 1]
                 if pin != target_acc["pin"]:
