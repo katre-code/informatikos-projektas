@@ -167,6 +167,15 @@ Do you want to repay your loan?
         client_socket.send(server_message.encode("utf-8"))
         return False
 
+def reset_loan_timers_on_reconnect(client: "Client"):
+    client.blocked = False
+
+    now = time.time()
+    for acc in client.accounts:
+        if acc.get("loan", 0) > 0:
+            acc["loan_start"] = now
+            acc["loan_warned"] = False
+
 ###############################################################################
 
 class Client:
@@ -493,6 +502,7 @@ def handle_client(client_socket):
 
         if name in CLIENTS:
             client = CLIENTS [name]
+            reset_loan_timers_on_reconnect(client)
             client_socket.send(f"Welcome back, {name}! We have loaded your account infomation.\n".encode("utf-8"))
 
         else:
